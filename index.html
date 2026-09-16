@@ -8,360 +8,232 @@
 <title>Dynamic 3DGS Compression Benchmark</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
 <style>
 :root {
-  --ground: #F2F4F3;
-  --surface: #FFFFFF;
-  --sunk: #E9EDEB;
-  --ink: #141C19;
-  --ink-2: #3D4844;
-  --muted: #66736E;
-  --rule: #D5DCD9;
-  --grid: #E6EBE9;
-  --accent: #1C5D7A;
-  --good: #1D7449;
-  --good-bg: rgba(29, 116, 73, 0.16);
-  --bad: #A63A2A;
-  --bad-bg: rgba(166, 58, 42, 0.15);
-  --shadow: 0 1px 2px rgba(20, 28, 25, 0.06);
-  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --sans: "IBM Plex Sans", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ground: #0D1210;
-    --surface: #141B18;
-    --sunk: #1A2320;
-    --ink: #E3EAE6;
-    --ink-2: #BAC5C0;
-    --muted: #8D9A95;
-    --rule: #28322E;
-    --grid: #202926;
-    --accent: #86BDD6;
-    --good: #6FCB98;
-    --good-bg: rgba(111, 203, 152, 0.16);
-    --bad: #F08F7C;
-    --bad-bg: rgba(240, 143, 124, 0.15);
-    --shadow: none;
-  }
-}
-:root[data-theme="dark"] {
-  --ground: #0D1210;
-  --surface: #141B18;
-  --sunk: #1A2320;
-  --ink: #E3EAE6;
-  --ink-2: #BAC5C0;
-  --muted: #8D9A95;
-  --rule: #28322E;
-  --grid: #202926;
-  --accent: #86BDD6;
-  --good: #6FCB98;
-  --good-bg: rgba(111, 203, 152, 0.16);
-  --bad: #F08F7C;
-  --bad-bg: rgba(240, 143, 124, 0.15);
-  --shadow: none;
+  color-scheme: light;
+  --ground: #ffffff;
+  --surface: #ffffff;
+  --sunk: #f5f5f5;
+  --ink: #363636;
+  --ink-2: #4a4a4a;
+  --muted: #7a7a7a;
+  --rule: #dbdbdb;
+  --grid: #ededed;
+  --accent: #3273dc;
+  --good: #227a51;
+  --good-bg: #eaf5ef;
+  --bad: #b03a2e;
+  --bad-bg: #fbecea;
+  --sans: "Noto Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --display: var(--sans);
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   background: var(--ground);
-  color: var(--ink);
-  font: 15px/1.55 var(--sans);
-  padding-inline: clamp(16px, 4vw, 44px);
-  padding-block: 0 72px;
+  color: var(--ink-2);
+  font: 16px/1.5 var(--sans);
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--accent); text-underline-offset: 2px; }
-a:hover { text-decoration-thickness: 2px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wrap { max-width: 1280px; margin: 0 auto; }
-.mono { font-family: var(--mono); }
-.eyebrow {
-  font: 500 11.5px/1.3 var(--mono);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+.mono { font-family: var(--mono); font-size: 0.92em; }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 32px); }
+.narrow { max-width: 900px; margin-left: auto; margin-right: auto; }
+
+h1, h2, h3, h4 { font-family: var(--display); color: var(--ink); margin: 0; }
+h1 { font-size: clamp(30px, 4.6vw, 48px); font-weight: 600; line-height: 1.13; text-align: center; }
+h2 { font-size: clamp(25px, 3.2vw, 33.6px); font-weight: 600; line-height: 1.2; text-align: center; }
+h3 { font-size: 22px; font-weight: 600; }
+p { text-wrap: pretty; }
 
 /* ---------- header ---------- */
-.top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 48px;
-  padding-block: 44px 40px;
-  border-bottom: 1px solid var(--rule);
-  align-items: start;
-}
-.top h1 {
-  font-weight: 700;
-  font-size: clamp(34px, 4.4vw, 54px);
-  line-height: 1.02;
-  letter-spacing: -0.022em;
-  margin: 14px 0 16px;
-  font-variation-settings: "opsz" 96;
-}
-.authors { font-size: 16px; color: var(--ink); margin: 0; }
-.affil { color: var(--muted); margin: 2px 0 20px; font-size: 14px; }
-.links { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+header.top { padding: 56px 0 18px; }
+.authors { font-size: 20px; text-align: center; margin: 22px 0 0; }
+.affil { font-size: 17px; text-align: center; color: var(--muted); margin: 6px 0 0; }
+.links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 26px 0 0; }
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 8px 16px 8px 13px;
-  border: 1px solid var(--ink);
+  padding: 8px 20px;
+  border: 1px solid #363636;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--ground);
-  text-decoration: none;
-  font: 500 14.5px/1.2 var(--sans);
+  background: #363636;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
   white-space: nowrap;
 }
+a.btn:hover { background: #4a4a4a; border-color: #4a4a4a; color: #fff; text-decoration: none; }
 .btn svg { width: 17px; height: 17px; flex: none; fill: currentColor; }
-a.btn:hover { background: var(--ink-2); border-color: var(--ink-2); }
-.btn[aria-disabled="true"] { background: var(--sunk); border: 1px dashed var(--rule); color: var(--muted); cursor: default; }
-.btn .tag { font: 500 10px var(--mono); letter-spacing: 0.07em; text-transform: uppercase; opacity: 0.85; }
-.abstract { color: var(--ink-2); max-width: 66ch; margin: 0; font-size: 14.5px; }
-
-.thesis {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-  padding: 20px 20px 14px;
-  box-shadow: var(--shadow);
-}
-.thesis h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 4px; }
-.thesis p { margin: 0 0 14px; color: var(--muted); font-size: 13.5px; }
-.gain { width: 100%; border-collapse: separate; border-spacing: 3px; font-variant-numeric: tabular-nums; }
-.gain th { font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 2px 6px 6px; font-weight: 500; }
-.gain th.col { text-align: center; }
-.gain td.name { font-weight: 500; padding-right: 8px; white-space: nowrap; }
-.gain td.name i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 8px; vertical-align: 0; }
-.gain button {
-  width: 100%;
-  border: 0;
-  border-radius: 6px;
-  padding: 7px 4px;
-  font: 500 14px var(--mono);
-  color: var(--ink);
-  background: var(--sunk);
-  cursor: pointer;
-}
-.gain button:hover { outline: 1px solid var(--ink-2); }
-.gain .foot { font-size: 12px; color: var(--muted); padding-top: 8px; }
+.btn[aria-disabled="true"] { background: #fff; border-color: var(--rule); color: var(--muted); }
+.btn .tag { font-size: 13px; opacity: 0.8; }
+.abstract { font-size: 18.4px; line-height: 1.5; text-align: justify; margin: 34px auto 0; }
 
 /* ---------- sections ---------- */
-section { padding-block: 44px 8px; }
-.sec-head { display: flex; justify-content: space-between; align-items: end; gap: 16px 32px; flex-wrap: wrap; margin-bottom: 18px; }
-.sec-head h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; letter-spacing: -0.015em; margin-top: 6px; }
-.sec-head p { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
+section { padding: 46px 0 0; }
+section > h2 + .note { margin: 12px auto 0; }
+.note { color: var(--muted); font-size: 16px; text-align: center; max-width: 780px; }
+.blockgap { margin-top: 26px; }
+
+/* ---------- gain table ---------- */
+.gainwrap { overflow-x: auto; margin-top: 26px; }
+.gain { margin: 0 auto; border-collapse: separate; border-spacing: 4px; font-variant-numeric: tabular-nums; }
+.gain th { font-size: 14px; font-weight: 600; color: var(--muted); padding: 2px 8px 8px; text-align: left; }
+.gain th.col { text-align: center; }
+.gain td.name { white-space: nowrap; padding-right: 10px; color: var(--ink); }
+.gain td.name i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 9px; }
+.gain button {
+  width: 100%; border: 0; border-radius: 4px; padding: 8px 14px;
+  font: 15px var(--sans); font-variant-numeric: tabular-nums; color: var(--ink);
+  background: var(--sunk); cursor: pointer;
+}
+.gain button:hover { outline: 2px solid var(--ink); }
+.gain .foot { font-size: 14px; color: var(--muted); padding-top: 10px; text-align: center; }
 
 /* ---------- explorer ---------- */
-.controls {
-  display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: end;
-  padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-}
-.field > label, .field > .lab {
-  display: block;
-  font: 500 10.5px/1.2 var(--mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.seg button {
-  border: 0; background: transparent; padding: 7px 12px;
-  font: 500 13.5px var(--sans); color: var(--ink-2); cursor: pointer;
-}
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: end; justify-content: center; margin-top: 26px; }
+.field > label, .field > .lab { display: block; font-size: 14px; color: var(--muted); margin-bottom: 5px; }
+.seg { display: inline-flex; flex-wrap: wrap; max-width: 100%; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: #fff; padding: 7px 13px; font: 15px var(--sans); color: var(--ink-2); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--rule); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
-select {
-  font: 14px var(--sans);
-  padding: 7px 10px;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--ink);
-  max-width: 100%;
-}
-.presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0 14px; }
-.presets .eyebrow { margin-right: 6px; }
-.chip {
-  border: 1px solid var(--rule);
-  background: var(--surface);
-  color: var(--ink-2);
-  padding: 5px 11px;
-  border-radius: 999px;
-  font: 13px var(--sans);
-  cursor: pointer;
-}
-.chip:hover { border-color: var(--ink-2); }
-.chip[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); background: var(--sunk); }
-.explorer { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 14px; align-items: start; }
-.picker {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 12px;
-  max-height: 690px;
-  overflow: auto;
-}
-.picker-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--surface); z-index: 1; }
-.picker-head button { border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; padding: 2px 4px; }
+.seg button[aria-pressed="true"] { background: #363636; color: #fff; }
+select { font: 15px var(--sans); padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; color: var(--ink); max-width: 100%; }
+.presets { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin: 18px 0 0; }
+.chip { border: 1px solid var(--rule); background: #fff; color: var(--ink-2); padding: 5px 13px; border-radius: 999px; font-size: 14.5px; cursor: pointer; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { background: #363636; border-color: #363636; color: #fff; }
+
+.explorer { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; margin-top: 22px; }
+.picker { border: 1px solid var(--rule); border-radius: 6px; max-height: 660px; overflow: auto; }
+.picker-head { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: #fff; z-index: 1; font-size: 14px; color: var(--muted); }
+.picker-head button { border: 0; background: none; color: var(--accent); font: 14px var(--sans); cursor: pointer; }
 details.cat { border-bottom: 1px solid var(--rule); }
 details.cat:last-child { border-bottom: 0; }
-details.cat > summary {
-  list-style: none; cursor: pointer;
-  padding: 10px 12px 8px;
-  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px;
-}
+details.cat > summary { list-style: none; cursor: pointer; padding: 10px 12px 8px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
 details.cat > summary::-webkit-details-marker { display: none; }
-details.cat > summary .t { font-weight: 600; font-size: 14px; }
-details.cat > summary .n { font: 12px var(--mono); color: var(--muted); align-self: center; }
-details.cat > summary .p { grid-column: 1 / -1; font: 11px var(--mono); color: var(--muted); }
-.grp { font: 500 10.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 8px 12px 3px; }
-.srow {
-  display: grid; grid-template-columns: 16px 30px minmax(0, 1fr); gap: 8px; align-items: center;
-  padding: 3px 12px; cursor: pointer; font-size: 13.5px; line-height: 1.3;
-}
+details.cat > summary .t { font-weight: 600; font-size: 15px; color: var(--ink); }
+details.cat > summary .n { font-size: 13px; color: var(--muted); align-self: center; }
+details.cat > summary .p { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.grp { font-size: 13px; color: var(--muted); padding: 9px 12px 3px; }
+.srow { display: grid; grid-template-columns: 16px 30px minmax(0, 1fr); gap: 8px; align-items: center; padding: 3px 12px; cursor: pointer; font-size: 14.5px; line-height: 1.35; }
 .srow:hover { background: var(--sunk); }
-.srow input { margin: 0; accent-color: var(--ink); }
+.srow input { margin: 0; accent-color: #363636; }
 .srow svg { display: block; }
-.srow .lbl b { font-weight: 500; }
+.srow .lbl b { font-weight: 600; color: var(--ink); }
 .srow .lbl span { color: var(--muted); }
-.srow.na { opacity: 0.42; }
+.srow.na { opacity: 0.5; }
 .srow[hidden] { display: none; }
-.plotcard { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 6px 6px 2px; min-width: 0; }
+.plotcard { border: 1px solid var(--rule); border-radius: 6px; padding: 6px 6px 2px; min-width: 0; }
 #plot { width: 100%; height: 600px; }
-.keyline { display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); padding: 4px 12px 10px; align-items: center; }
+.keyline { display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); padding: 4px 12px 10px; align-items: center; }
 .keyline svg { vertical-align: middle; margin-right: 6px; }
-.notice { font-size: 13px; color: var(--muted); padding: 0 12px 10px; }
+.notice { font-size: 14px; color: var(--muted); padding: 0 12px 10px; }
 .empty { display: grid; place-items: center; height: 600px; color: var(--muted); text-align: center; padding: 24px; }
 
-.tablebar { display: flex; justify-content: space-between; align-items: end; gap: 12px 24px; flex-wrap: wrap; margin: 20px 0 10px; }
-.tablebar h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-.tablebar p { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; }
-.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
-table.res { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-table.res th {
-  font: 500 10.5px/1.25 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
-  text-align: left; padding: 11px 12px 9px; border-bottom: 1px solid var(--rule); white-space: nowrap;
-  position: relative;
-}
+.tablebar { display: flex; justify-content: space-between; align-items: end; gap: 12px 24px; flex-wrap: wrap; margin: 30px 0 10px; }
+.tablebar p { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; }
+table.res { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+table.res th { font-size: 14px; font-weight: 600; color: var(--muted); text-align: left; padding: 11px 12px 9px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 table.res th button { all: unset; cursor: pointer; }
-table.res th button:focus-visible { outline: 2px solid var(--accent); }
 table.res th.num, table.res td.num { text-align: right; }
-table.res td { padding: 8px 12px; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: middle; }
+table.res td { padding: 9px 12px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 table.res tr:last-child td { border-bottom: 0; }
-table.res td.num { font-family: var(--mono); font-size: 13px; }
 table.res td.series { display: flex; align-items: center; gap: 10px; }
-table.res td.series b { font-weight: 500; }
+table.res td.series b { font-weight: 600; color: var(--ink); }
 table.res td.series span { color: var(--muted); }
-.bd { display: inline-block; min-width: 72px; padding: 2px 8px; border-radius: 5px; }
+.bd { display: inline-block; min-width: 72px; padding: 2px 8px; border-radius: 4px; }
 .bd.neg { color: var(--good); background: var(--good-bg); }
 .bd.pos { color: var(--bad); background: var(--bad-bg); }
 .dim { color: var(--muted); }
 
 /* ---------- catalogue ---------- */
-.catblock { margin-top: 28px; }
-.catblock-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 14px; }
-.catblock-head h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-.catblock-head code { font: 13px var(--mono); color: var(--muted); }
-.catblock-head p { margin: 0; color: var(--muted); font-size: 13.5px; flex-basis: 100%; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
-.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+.catblock { margin-top: 32px; }
+.catblock-head { text-align: center; padding-bottom: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--rule); }
+.catblock-head h3 { display: inline; }
+.catblock-head code { font: 14px var(--mono); color: var(--muted); margin-left: 8px; }
+.catblock-head p { margin: 8px auto 0; color: var(--muted); font-size: 15px; max-width: 780px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 14px; }
+.card { border: 1px solid var(--rule); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 9px; }
 .card.ours { border-color: var(--ink); }
 .card-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
-.card h4 { margin: 0; font: 700 20px/1.1 var(--display); letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
-.card h4 i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
-.pill { font: 500 10.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-2); white-space: nowrap; }
-.card .ref { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-.card .desc { margin: 0; font-size: 13.5px; }
-.card dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13px; }
-.card dt { font: 500 10.5px/1.9 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.card h4 { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+.card h4 i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.pill { font-size: 13px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+.card .ref { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+.card .desc { margin: 0; font-size: 14.5px; }
+.card dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 14px; }
+.card dt { color: var(--muted); }
 .card dd { margin: 0; overflow-wrap: anywhere; }
-.card .lnk { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; margin-top: auto; padding-top: 4px; }
+.card .lnk { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14.5px; margin-top: auto; padding-top: 4px; }
 
 /* ---------- similarity ---------- */
-.simgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.sim { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 12px; }
-.sim canvas { width: 100%; max-width: 100%; aspect-ratio: 1; image-rendering: pixelated; display: block; border-radius: 3px; background: var(--sunk); }
-.sim h4 { margin: 10px 0 0; font: 600 14.5px var(--sans); }
-.sim .meta { font: 12.5px var(--mono); color: var(--muted); }
-.ramp { height: 8px; border-radius: 4px; margin: 10px 0 4px; }
-.rampl { display: flex; justify-content: space-between; font: 11.5px var(--mono); color: var(--muted); }
+.simgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 26px; }
+.sim { border: 1px solid var(--rule); border-radius: 6px; padding: 12px; }
+.sim canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; display: block; border-radius: 3px; background: var(--sunk); }
+.sim h4 { margin: 10px 0 0; font-size: 15.5px; font-weight: 600; }
+.sim .meta { font-size: 14px; color: var(--muted); }
+.ramp { height: 8px; border-radius: 4px; margin: 10px 0 5px; }
+.rampl { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--muted); }
 
 /* ---------- protocol / cite ---------- */
-.protocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; }
-.protocol div { border-top: 1px solid var(--rule); padding-top: 10px; }
-.protocol h4 { margin: 0 0 4px; font: 600 15px var(--sans); }
-.protocol p { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 64ch; }
-.cite { position: relative; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
-.cite pre { margin: 0; padding: 18px 20px; overflow-x: auto; font: 13px/1.6 var(--mono); color: var(--ink-2); }
+.protocol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 44px; margin-top: 26px; }
+.protocol div { border-top: 1px solid var(--rule); padding-top: 11px; }
+.protocol h4 { margin: 0 0 4px; font-size: 16.5px; font-weight: 600; }
+.protocol p { margin: 0; font-size: 15px; }
+.cite { position: relative; border: 1px solid var(--rule); border-radius: 6px; margin-top: 26px; }
+.cite pre { margin: 0; padding: 18px 20px; overflow-x: auto; font: 14px/1.6 var(--mono); color: var(--ink-2); }
 .cite button { position: absolute; top: 10px; right: 10px; }
-footer { margin-top: 56px; border-top: 1px solid var(--rule); padding-top: 18px; color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; }
+footer { margin-top: 56px; border-top: 1px solid var(--rule); padding: 20px 0 64px; color: var(--muted); font-size: 14.5px; text-align: center; }
+footer span { display: block; }
 
 @media (max-width: 1000px) {
-  .top { grid-template-columns: 1fr; gap: 28px; }
   .explorer { grid-template-columns: 1fr; }
-  .picker { max-height: 380px; }
+  .picker { max-height: 360px; }
   .simgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  #plot, .empty { height: 440px; }
+  #plot, .empty { height: 430px; }
+  .gain th { font-size: 13px; padding-bottom: 6px; }
+  .gain button { padding: 8px 6px; font-size: 14px; }
+  .gain td.name i { margin-right: 6px; }
   .protocol { grid-template-columns: 1fr; }
-  .gain th.col { font-size: 9.5px; letter-spacing: 0.02em; }
+  .abstract { text-align: left; font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
 <div class="wrap">
+
 <header class="top">
-  <div>
-    <div class="eyebrow">Benchmark · N3DV · 6 scenes × 4 estimators × 300 frames</div>
-    <h1>Robust, Estimator-Agnostic Dynamic 3DGS Compression</h1>
-    <p class="authors">Chenjunjie Wang, Zixi Huang, Yao Wang, Jona Ballé</p>
-    <p class="affil">New York University</p>
-    <nav class="links" aria-label="Project links">
-      <a class="btn" href="https://github.com/wcjj1236/dynamic-3dgs-compression-benchmark">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        Star us on GitHub
-      </a>
-      <span class="btn" aria-disabled="true">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 0h6.2L14 4.3V14.5c0 .83-.67 1.5-1.5 1.5h-9C2.67 16 2 15.33 2 14.5v-13C2 .67 2.67 0 3.5 0zm5.7 1.5H3.5v13h9V5H9.2V1.5zM5 8h6v1.2H5V8zm0 2.6h6v1.2H5v-1.2z"/></svg>
-        Paper <span class="tag">coming soon</span>
-      </span>
-      <span class="btn" aria-disabled="true">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 2h2.6l3.2 4.6L11.2 2h2.6L9.3 8l4.5 6h-2.6L8 9.4 4.8 14H2.2l4.5-6z"/></svg>
-        arXiv <span class="tag">coming soon</span>
-      </span>
-      <a class="btn" href="https://huggingface.co/datasets/ChenJJ123/d3dgs-benchmark">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c3.87 0 7 1.34 7 3v10c0 1.66-3.13 3-7 3s-7-1.34-7-3V3c0-1.66 3.13-3 7-3zm5.5 5.1C12.2 5.75 10.2 6.1 8 6.1s-4.2-.35-5.5-1V8c0 .5 2.1 1.5 5.5 1.5s5.5-1 5.5-1.5V5.1zm0 4.9c-1.3.65-3.3 1-5.5 1s-4.2-.35-5.5-1v3c0 .5 2.1 1.5 5.5 1.5s5.5-1 5.5-1.5v-3zM8 1.5C4.6 1.5 2.5 2.5 2.5 3S4.6 4.5 8 4.5s5.5-1 5.5-1.5S11.4 1.5 8 1.5z"/></svg>
-        Sequences on Hugging Face
-      </a>
-    </nav>
-    <p class="abstract" id="abstract"></p>
-  </div>
-  <aside class="thesis" aria-labelledby="thesis-title">
-    <div class="eyebrow">Six-sequence average BD-rate · concatenation (GoF 30) vs per-frame</div>
-    <h2 id="thesis-title">What concatenation buys, by estimator</h2>
-    <p>Same codec, same rate points, same scoring; only the way the input Gaussians were estimated changes. Negative means fewer bits. Select a cell to open its curves.</p>
-    <table class="gain" id="gain"></table>
-  </aside>
+  <h1 class="narrow">Robust, Estimator-Agnostic Dynamic 3DGS Compression</h1>
+  <p class="authors">Chenjunjie Wang, Zixi Huang, Yao Wang, Jona Ballé</p>
+  <p class="affil">New York University</p>
+  <nav class="links" aria-label="Project links">
+    <a class="btn" href="https://github.com/wcjj1236/dynamic-3dgs-compression-benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> Code</a>
+    <a class="btn" href="https://huggingface.co/datasets/ChenJJ123/d3dgs-benchmark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0c3.87 0 7 1.34 7 3v10c0 1.66-3.13 3-7 3s-7-1.34-7-3V3c0-1.66 3.13-3 7-3zm5.5 5.1C12.2 5.75 10.2 6.1 8 6.1s-4.2-.35-5.5-1V8c0 .5 2.1 1.5 5.5 1.5s5.5-1 5.5-1.5V5.1zm0 4.9c-1.3.65-3.3 1-5.5 1s-4.2-.35-5.5-1v3c0 .5 2.1 1.5 5.5 1.5s5.5-1 5.5-1.5v-3zM8 1.5C4.6 1.5 2.5 2.5 2.5 3S4.6 4.5 8 4.5s5.5-1 5.5-1.5S11.4 1.5 8 1.5z"/></svg> Sequences</a>
+    <span class="btn" aria-disabled="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 0h6.2L14 4.3V14.5c0 .83-.67 1.5-1.5 1.5h-9C2.67 16 2 15.33 2 14.5v-13C2 .67 2.67 0 3.5 0zm5.7 1.5H3.5v13h9V5H9.2V1.5zM5 8h6v1.2H5V8zm0 2.6h6v1.2H5v-1.2z"/></svg> Paper <span class="tag">soon</span></span>
+    <span class="btn" aria-disabled="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 2h2.6l3.2 4.6L11.2 2h2.6L9.3 8l4.5 6h-2.6L8 9.4 4.8 14H2.2l4.5-6z"/></svg> arXiv <span class="tag">soon</span></span>
+  </nav>
+  <p class="abstract narrow" id="abstract"></p>
 </header>
 
+<section id="gains" aria-labelledby="gains-title">
+  <h2 id="gains-title">What concatenation buys</h2>
+  <p class="note">Six-sequence average BD-rate at GoF 30, against per-frame coding with the same codec and the
+    same rate points. Negative means fewer bits. Select a cell to open its curves.</p>
+  <div class="gainwrap"><table class="gain" id="gain"></table></div>
+</section>
+
 <section id="explorer" aria-labelledby="explorer-title">
-  <div class="sec-head">
-    <div>
-      <div class="eyebrow">Rate–distortion explorer</div>
-      <h2 id="explorer-title">Every measured curve</h2>
-      <p>Pick what to compare in the list, then switch the reference: the uncompressed input frames (identical-source) or the captured images of the held-out camera (ground truth). Rates count everything a decoder needs, in MB per frame.</p>
-    </div>
-  </div>
+  <h2 id="explorer-title">Rate–distortion explorer</h2>
+  <p class="note">Every measured curve. The reference switch decides what quality is compared against: the
+    uncompressed input frames, or the images of the held-out camera.</p>
 
   <div class="controls">
     <div class="field">
@@ -385,11 +257,11 @@ footer { margin-top: 56px; border-top: 1px solid var(--rule); padding-top: 18px;
     </div>
   </div>
 
-  <div class="presets" id="presets"><span class="eyebrow">Paper views</span></div>
+  <div class="presets" id="presets"></div>
 
   <div class="explorer">
     <div class="picker" id="picker" aria-label="Series to compare">
-      <div class="picker-head"><span class="eyebrow" id="selcount">0 selected</span><button type="button" id="clear">Clear all</button></div>
+      <div class="picker-head"><span id="selcount">0 selected</span><button type="button" id="clear">Clear all</button></div>
     </div>
     <div class="plotcard">
       <div id="plot" role="img" aria-label="Rate-distortion plot of the selected series"></div>
@@ -406,7 +278,7 @@ footer { margin-top: 56px; border-top: 1px solid var(--rule); padding-top: 18px;
   <div class="tablebar">
     <div>
       <h3>Selected series</h3>
-      <p id="tablecap">BD-rate integrates the two curves over their shared quality range; a column header sorts.</p>
+      <p id="tablecap"></p>
     </div>
     <div class="field">
       <label for="refsel">Compare BD-rate against</label>
@@ -417,46 +289,41 @@ footer { margin-top: 56px; border-top: 1px solid var(--rule); padding-top: 18px;
 </section>
 
 <section id="methods" aria-labelledby="methods-title">
-  <div class="sec-head">
-    <div>
-      <div class="eyebrow">What was run</div>
-      <h2 id="methods-title">Estimators and codecs</h2>
-      <p>Grouped as in the repository. Every upstream project is fetched at the listed commit and patched by its <span class="mono">setup.sh</span>; the patches are the complete list of what we changed.</p>
-    </div>
-  </div>
+  <h2 id="methods-title">Estimators and codecs</h2>
+  <p class="note">Every upstream project is fetched at the commit on its card and patched by its
+    <span class="mono">setup.sh</span>. Those patches are the complete list of what we changed.</p>
   <div id="catalogue"></div>
 </section>
 
 <section id="similarity" aria-labelledby="sim-title">
-  <div class="sec-head">
-    <div>
-      <div class="eyebrow">Correlation pattern · flame steak, 300 × 300 frame pairs</div>
-      <h2 id="sim-title">How much of a sequence repeats</h2>
-      <p>Each cell is how cheaply frame <i>j</i> is predicted from frame <i>i</i> when both are coded together (appearance residual plus Bures–Wasserstein covariance distance), normalised per sequence; bright is similar. ρ is the mean cost between frames more than 150 apart over the mean cost between neighbours: above 1 means temporal structure.</p>
-    </div>
-  </div>
+  <h2 id="sim-title">How much of a sequence repeats</h2>
+  <p class="note">Each cell is how cheaply frame <i>j</i> is predicted from frame <i>i</i>; bright is similar.
+    ρ compares distant frames with neighbours, so above 1 means temporal structure. Flame steak, 300 × 300 pairs.</p>
   <div class="simgrid" id="simgrid"></div>
 </section>
 
 <section id="protocol" aria-labelledby="protocol-title">
-  <div class="sec-head">
-    <div>
-      <div class="eyebrow">How the numbers are made</div>
-      <h2 id="protocol-title">Measurement protocol</h2>
-    </div>
-  </div>
+  <h2 id="protocol-title">Measurement protocol</h2>
   <div class="protocol">
-    <div><h4>Identical-source PSNR</h4><p>The reference is a render of the uncompressed input Gaussian frame from every calibrated N3DV camera. Squared error is pooled over all pixels, views and 300 frames before conversion to dB, in RGB and in BT.709 YUV. It isolates coding loss from the estimator's own reconstruction error, so curves of different estimators do not share a scale.</p></div>
-    <div><h4>Per-frame mean PSNR and SSIM</h4><p>The D-FCGS and D-GPCC pipelines report PSNR averaged over frames in dB, which is lower than the pooled value. Choose “PSNR · RGB (per-frame mean)” to put static and dynamic codecs on one axis.</p></div>
-    <div><h4>Ground truth</h4><p>PSNR, SSIM and LPIPS (AlexNet) against the captured images of the held-out camera. Here every estimator shares one reference, and published results can be placed beside ours; both arms saturate at the estimator's ceiling, so BD-rates on this axis are indicative at best.</p></div>
-    <div><h4>Rate and BD-rate</h4><p>MB per frame is total bytes ÷ frames ÷ 10<sup>6</sup>, including every I-frame. BD-rate fits log rate as a cubic in quality (quadratic with three points) and integrates both fits over the quality range the curves share.</p></div>
-    <div><h4>Six-scene average</h4><p>The i-th rate point of each scene is averaged across the six scenes, and BD-rate is taken on the averaged curves. An average appears only when all six scenes carry the same rate ladder.</p></div>
-    <div><h4>Provenance</h4><p>Every point is a row of <span class="mono">results/tables</span> in the repository (commit <span class="mono" id="commit"></span>), traced to its raw score file in <span class="mono">results/PROVENANCE.csv</span>. Decoded frames and bitstreams were not kept.</p></div>
+    <div><h4>Identical-source PSNR</h4><p>Against a render of the uncompressed input frame from every calibrated
+      camera, pooled over all pixels, views and 300 frames. It isolates coding loss, so curves of different
+      estimators do not share a scale.</p></div>
+    <div><h4>Per-frame mean</h4><p>D-FCGS and D-GPCC report PSNR averaged over frames, which is lower than the
+      pooled value. Pick the per-frame mean metric to put them on one axis with the static codecs.</p></div>
+    <div><h4>Ground truth</h4><p>PSNR, SSIM and LPIPS against the held-out camera. Every estimator shares one
+      reference here, so published results can sit beside ours — but both arms saturate at the estimator's
+      ceiling.</p></div>
+    <div><h4>Rate and BD-rate</h4><p>MB per frame is total bytes ÷ frames ÷ 10<sup>6</sup>, including every
+      I-frame. BD-rate integrates cubic fits of log rate over the quality range two curves share.</p></div>
+    <div><h4>Six-scene average</h4><p>The i-th rate point of each scene is averaged across the six scenes, and
+      BD-rate is taken on the averaged curves.</p></div>
+    <div><h4>Provenance</h4><p>Every point is a row of <span class="mono">results/tables</span> in the repository
+      (commit <span class="mono" id="commit"></span>), traced to its raw score file.</p></div>
   </div>
 </section>
 
 <section id="cite" aria-labelledby="cite-title">
-  <div class="sec-head"><div><div class="eyebrow">Citation</div><h2 id="cite-title">BibTeX</h2></div></div>
+  <h2 id="cite-title">BibTeX</h2>
   <div class="cite">
     <button type="button" class="chip" id="copybib">Copy</button>
 <pre id="bib">@misc{wang2026robust,
@@ -615,7 +482,7 @@ $("#commit").textContent = DATA.commit;
 (function gainTable() {
   const t = $("#gain");
   t.append(el("thead", {}, el("tr", {}, el("th", { scope: "col", text: "Codec" }),
-    ...["tracked", "semi-tracked", "untracked"].map((st, i) => el("th", { scope: "col", class: "col", text: ["3DGStream · tracked", "QUEEN · semi", "per-frame 3DGS · untracked"][i] })))));
+    ...["tracked", "semi-tracked", "untracked"].map((st, i) => el("th", { scope: "col", class: "col", text: ["3DGStream · tracked", "QUEEN · semi-tracked", "Per-frame 3DGS · untracked"][i] })))));
   const tb = el("tbody");
   STATIC.forEach(c => {
     const tr = el("tr", {}, el("td", { class: "name" }, el("i", { style: `background:${COLOR[c]}` }), NAME[c]));
@@ -631,7 +498,7 @@ $("#commit").textContent = DATA.commit;
     tb.append(tr);
   });
   t.append(tb);
-  t.append(el("tfoot", {}, el("tr", {}, el("td", { colspan: 4, class: "foot", text: "G-PCC, L-GSC, SPZ, HGSC, LGSCV: patched releases; GSCodec-S: its static video anchor. All at GoF 30." }))));
+  t.append(el("tfoot", {}, el("tr", {}, el("td", { colspan: 4, class: "foot", text: "Patched releases of each codec; GSCodec-S is its static video anchor." }))));
 })();
 
 /* ---------- controls ---------- */
@@ -743,8 +610,8 @@ function renderPlot() {
     paper_bgcolor: th.surface, plot_bgcolor: th.surface,
     font: { family: th.sans, color: th.ink2, size: 12.5 },
     margin: { l: 62, r: 16, t: 18, b: narrow ? 150 : 110 },
-    xaxis: { type: "log", title: { text: "Rate (MB per frame, log scale)", standoff: 8 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.mono, size: 11.5 } },
-    yaxis: { title: { text: `${state.proto === "gt" ? "vs ground truth · " : "vs input · "}${m.label}${m.unit ? " (" + m.unit + ")" : ""}`, standoff: 6 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.mono, size: 11.5 } },
+    xaxis: { type: "log", title: { text: "Rate (MB per frame, log scale)", standoff: 8 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.sans, size: 12 } },
+    yaxis: { title: { text: `${state.proto === "gt" ? "vs ground truth · " : "vs input · "}${m.label}${m.unit ? " (" + m.unit + ")" : ""}`, standoff: 6 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.sans, size: 12 } },
     legend: { orientation: "h", x: 0, y: -0.16, yanchor: "top", font: { size: 12, color: th.ink2 }, bgcolor: "rgba(0,0,0,0)" },
     hoverlabel: { bgcolor: th.surface, bordercolor: th.rule, font: { family: th.sans, color: th.ink, size: 12.5 } },
     hovermode: "closest",
@@ -813,7 +680,7 @@ function renderTable() {
     el("td", { class: "num" }, r.ish == null ? fmt(null) : `${(r.ish * 100).toFixed(0)}%`),
   )) : el("tr", {}, el("td", { colspan: cols.length, class: "dim", text: "Select series above to fill this table." })));
   t.replaceChildren(el("thead", {}, head), body);
-  $("#tablecap").textContent = `${m.label}, ${state.proto === "gt" ? "against ground truth" : "against the input frames"}, ${SCENE_NAME[state.scene]}. “Own anchor” is the series' per-frame arm (or GoF / GoP 1); a column header sorts.`;
+  $("#tablecap").textContent = `${m.label}, ${SCENE_NAME[state.scene]}. “Own anchor” is the series' per-frame arm; a column header sorts.`;
 }
 
 /* ---------- state sync ---------- */
@@ -835,27 +702,27 @@ const up = (repo, commit) => ({ label: `${repo} @ ${commit}`, href: `https://git
 const arxiv = (id) => ({ label: `arXiv:${id}`, href: `https://arxiv.org/abs/${id}` });
 const ours = (path) => ({ label: `${path}`, href: GH + path });
 const CATALOGUE = [
-  { title: "Sequences", path: "estimators/", note: "Four estimators trained on the six N3DV scenes; the exported sequences are the inputs of every codec. The estimators document how the sequences were made — the compression experiments start from the published sequences.", items: [
-    { name: "3DGStream", pill: "tracked", color: "#ff7f0e", ref: "Sun et al., CVPR 2024", desc: "A neural transformation cache moves the previous frame's Gaussians; we export the persistent base set, so every Gaussian keeps its row for 300 frames.", kv: [["Gaussians", "357–708 k, constant"], ["Export loss", "0.27 dB (+0.80 dB base set)"], ["Changes", "NTC robustness: empty-mask guard, fp16 overflow guard, per-scene warm-up bounds"], ["License", "MIT"]], links: [arxiv("2403.01444"), up("SJoJoK/3DGStream", "747ddfe"), ours("estimators/3dgstream")] },
+  { title: "Sequences", path: "estimators/", note: "Four estimators trained on the six N3DV scenes. The exported sequences are the input of every codec.", items: [
+    { name: "3DGStream", pill: "tracked", color: "#ff7f0e", ref: "Sun et al., CVPR 2024", desc: "A neural transformation cache moves the previous frame's Gaussians. We export the persistent base set, so every Gaussian keeps its row for 300 frames.", kv: [["Gaussians", "357–708 k, constant"], ["Export loss", "0.27 dB (+0.80 dB base set)"], ["Changes", "NTC robustness: empty-mask guard, fp16 overflow guard, per-scene warm-up bounds"], ["License", "MIT"]], links: [arxiv("2403.01444"), up("SJoJoK/3DGStream", "747ddfe"), ours("estimators/3dgstream")] },
     { name: "4D Gaussians", pill: "tracked", color: "#1f77b4", ref: "Wu et al., CVPR 2024", desc: "One canonical set deformed by a HexPlane field; frame t is the canonical set at time t.", kv: [["Gaussians", "118–132 k, constant"], ["Export loss", "2.39 dB"], ["Changes", "NumPy 2 compatibility in database.py"], ["License", "Apache-2.0"]], links: [arxiv("2310.08528"), up("hustvl/4DGaussians", "843d5ac"), ours("estimators/4dgaussians")] },
     { name: "QUEEN", pill: "semi-tracked", color: "#7b3294", ref: "Girish et al., NeurIPS 2024", desc: "Gated, quantised residual updates on a persistent set; 90.5–92.8% of positions are bit-identical between neighbours, while Gaussians are added and removed.", kv: [["Gaussians", "248–445 k, varies"], ["Export loss", "0.88 dB"], ["Changes", "undistortion-border mask (no-op on N3DV)"], ["License", "NVIDIA, non-commercial"]], links: [arxiv("2412.04469"), up("NVlabs/queen", "4d761ae"), ours("estimators/queen")] },
-    { name: "Per-frame 3DGS", pill: "untracked", color: "#7d8a86", ref: "Kerbl et al., SIGGRAPH 2023", desc: "Every frame is an independent 30 k-iteration optimisation from the same calibration: no correspondence, not even in order.", kv: [["Gaussians", "281–845 k, varies"], ["Export loss", "none"], ["Changes", "none"], ["License", "Gaussian-Splatting, non-commercial"]], links: [up("graphdeco-inria/gaussian-splatting", "54c035f"), ours("estimators/3dgs-perframe")] },
+    { name: "Per-frame 3DGS", pill: "untracked", color: "#7d8a86", ref: "Kerbl et al., SIGGRAPH 2023", desc: "Every frame is an independent optimisation from the same calibration: no correspondence at all.", kv: [["Gaussians", "281–845 k, varies"], ["Export loss", "none"], ["Changes", "none"], ["License", "Gaussian-Splatting, non-commercial"]], links: [up("graphdeco-inria/gaussian-splatting", "54c035f"), ours("estimators/3dgs-perframe")] },
   ] },
-  { title: "Static GS codecs", path: "codecs/", note: "Each runs twice on the same frames and rate points: every frame alone, and the frames of each GoF-30 group concatenated into one Gaussian set that is split back after decoding.", items: [
-    { name: "G-PCC", pill: "octree + RAHT", color: COLOR.gpcc, ref: "MPEG TMC13 v23.0-rc2, with our Gaussian splat coding profile", desc: "Geometry on a 2^18 octree grid, SH through RAHT, opacity, scale and rotation through prediction. The frame index rides as an 8-bit lossless attribute.", kv: [["Rates", "r01–r04, cw (QP 4)"], ["Changes", "splat profile (patches 0001–0006), slice-index clamp (0007)"], ["License", "BSD-3-Clause"]], links: [up("MPEGGroup/mpeg-pcc-tmc13", "a3d15c5"), ours("codecs/gpcc")] },
+  { title: "Static GS codecs", path: "codecs/", note: "Each runs twice on the same frames and rate points: every frame alone, and each GoF-30 group concatenated into one Gaussian set.", items: [
+    { name: "G-PCC", pill: "octree + RAHT", color: COLOR.gpcc, ref: "MPEG TMC13 v23.0-rc2, with our Gaussian splat coding profile", desc: "Geometry on a 2^18 octree grid, SH through RAHT, the rest through prediction. The frame index rides as a lossless attribute.", kv: [["Rates", "r01–r04, cw (QP 4)"], ["Changes", "splat profile (patches 0001–0006), slice-index clamp (0007)"], ["License", "BSD-3-Clause"]], links: [up("MPEGGroup/mpeg-pcc-tmc13", "a3d15c5"), ours("codecs/gpcc")] },
     { name: "L-GSC", pill: "quantise + Morton", color: COLOR["l-gsc"], ref: "Qualcomm, lite-3Dgsplat-codec v1.0", desc: "Fixed bit depths, Morton ordering and zlib. Group membership is recovered by replaying its Morton sort.", kv: [["Rates", "3 released levels"], ["Changes", "64-bit buffer sizes (bitstream unchanged)"], ["License", "Apache-2.0"]], links: [up("qualcomm/lite-3Dgsplat-codec", "a78ee6e"), ours("codecs/l-gsc")] },
     { name: "SPZ", pill: "per-Gaussian + zstd", color: COLOR.spz, ref: "Niantic Labs, SPZ format v4", desc: "Each Gaussian quantised on its own, each stream through zstd; input order is preserved, so groups split by counts.", kv: [["Rates", "5 SH bit depths"], ["Changes", "none"], ["License", "MIT"]], links: [up("nianticlabs/spz", "bb0efad"), ours("codecs/spz")] },
     { name: "HGSC", pill: "anchors + LOD", color: COLOR.hgsc, ref: "Huang et al., ICASSP 2025", desc: "G-PCC geometry, RAHT-coded anchors, two predicted levels of detail. The frame label is carried as a G-PCC reflectance attribute.", kv: [["Rates", "4 (QP with LOD depths)"], ["Changes", "frame-label carrier, scale and ledger fixes"], ["License", "Gaussian-Splatting, non-commercial"]], links: [arxiv("2411.06976"), up("H-Huang774/HGSC", "2d354c1"), ours("codecs/hgsc")] },
     { name: "LGSCV", pill: "2D maps + HEVC", color: COLOR.lgscv, ref: "Yang, Van Der Auwera, Li, DCC 2026", desc: "Morton scan and MiniPLAS to square attribute images, PCA on SH, HM 18.0. Membership through the saved map permutation.", kv: [["Rates", "5 QP tuples"], ["Changes", "saved map permutation, phase timers"], ["License", "no license file upstream"]], links: [up("Qi-Yangsjtu/LGSCV", "6c89e33"), ours("codecs/lgscv")] },
     { name: "GSCodec-S", pill: "PLAS + intra HEVC", color: COLOR["gscodec-s"], ref: "Liu et al., GSCodec Studio (static video anchor)", desc: "PLAS sorts the Gaussians into a grid, attributes become YUV images coded all-intra.", kv: [["Rates", "rp1–rp4"], ["Changes", "none"], ["License", "Apache-2.0"]], links: [arxiv("2506.01822"), up("JasonLSC/GSCodec_Studio", "810ee4a"), ours("codecs/gscodec")] },
   ] },
-  { title: "Dynamic GS codecs", path: "codecs/", note: "They code a sequence with their own temporal prediction and need tracked input: a constant Gaussian count with row correspondence inside every group.", items: [
+  { title: "Dynamic GS codecs", path: "codecs/", note: "These code a sequence with their own temporal prediction, so they need tracked input.", items: [
     { name: "GSCodec-D", pill: "inter HEVC", color: COLOR["gscodec-d"], ref: "Liu et al., GSCodec Studio (dynamic video anchor)", desc: "One Morton ordering shared by a group of pictures, attribute videos coded with inter prediction.", kv: [["Rates", "rp1–rp4"], ["Group", "GoP 30 (GoP 16 released)"], ["Changes", "none"]], links: [arxiv("2506.01822"), up("JasonLSC/GSCodec_Studio", "810ee4a"), ours("codecs/gscodec")] },
-    { name: "D-FCGS", pill: "I-P motion", color: COLOR["d-fcgs"], ref: "Zhang et al., AAAI 2026; I-frames by FCGS (Chen et al., ICLR 2025)", desc: "Feed-forward I-frames and a learned motion codec for P-frames; run with an encoder-side row alignment that the released I-frame branch destroys.", kv: [["Rates", "FCGS λ 1e-4 … 16e-4"], ["Group", "GoF 5 and 10"], ["Changes", "paths, decoder order, PLY output, C++17 extension builds"], ["License", "MIT / Apache-2.0"]], links: [arxiv("2507.05859"), up("Mr-Zwkid/D-FCGS", "ae5231d"), up("YihangChen-ee/FCGS", "31e59a4"), ours("codecs/d-fcgs")] },
+    { name: "D-FCGS", pill: "I-P motion", color: COLOR["d-fcgs"], ref: "Zhang et al., AAAI 2026; I-frames by FCGS (Chen et al., ICLR 2025)", desc: "Feed-forward I-frames and a learned motion codec for P-frames, with an encoder-side row alignment the released I-frame branch destroys.", kv: [["Rates", "FCGS λ 1e-4 … 16e-4"], ["Group", "GoF 5 and 10"], ["Changes", "paths, decoder order, PLY output, C++17 extension builds"], ["License", "MIT / Apache-2.0"]], links: [arxiv("2507.05859"), up("Mr-Zwkid/D-FCGS", "ae5231d"), up("YihangChen-ee/FCGS", "31e59a4"), ours("codecs/d-fcgs")] },
     { name: "D-GPCC", pill: "ours", ours: true, color: COLOR["d-gpcc"], ref: "This work: concatenated key-frame coding", desc: "D-FCGS with its I-frames concatenated and coded by G-PCC; P-frames, checkpoint and parameters unchanged. −46.2% BD-rate against D-FCGS on the six-scene curves.", kv: [["Rates", "G-PCC r01–r04, cw for the I-frames"], ["Group", "GoF 5 and 10"], ["Ablation", "I-frames coded one by one"]], links: [ours("codecs/d-gpcc")] },
   ] },
-  { title: "Measurement", path: "evaluation/ · similarity/", note: "The same scoring runs for every codec, from decoded PLY frames and a rate ledger.", items: [
-    { name: "Evaluation", pill: "gsplat", color: "#6b7a74", ref: "identical-source and ground-truth protocols", desc: "Renders every decoded frame from every calibrated camera, pools squared error, scores SSIM and LPIPS against the held-out camera, computes BD-rate and a health gate.", kv: [["Metrics", "PSNR RGB / YUV, SSIM, LPIPS"]], links: [ours("evaluation")] },
+  { title: "Measurement", path: "evaluation/ · similarity/", note: "The same scoring runs for every codec, from decoded frames and a rate ledger.", items: [
+    { name: "Evaluation", pill: "gsplat", color: "#6b7a74", ref: "identical-source and ground-truth protocols", desc: "Renders every decoded frame from every camera, pools squared error, scores SSIM and LPIPS against the held-out camera, and computes BD-rate.", kv: [["Metrics", "PSNR RGB / YUV, SSIM, LPIPS"]], links: [ours("evaluation")] },
     { name: "Frame similarity", pill: "diagnostic", color: "#6b7a74", ref: "the correlation-pattern analysis of the paper", desc: "Pairwise frame cost through a G-PCC-style level-of-detail prediction with Bures–Wasserstein covariance distance, on 250 k points per frame.", kv: [["Output", "300 × 300 cost matrix, ρ"]], links: [ours("similarity")] },
   ] },
 ];
@@ -879,8 +746,12 @@ function buildCatalogue() {
 function buildSimilarity() {
   const g = $("#simgrid");
   const lut = DATA.viridis.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
-  DATA.similarity.forEach(sm => {
-    const cv = el("canvas", { width: sm.n, height: sm.n, role: "img", "aria-label": `Similarity matrix, ${sm.name}, rho ${sm.rho}` });
+  const RANK = { tracked: 0, "semi-tracked": 1, untracked: 2 };
+  const TITLE = { "per-frame 3DGS": "Per-frame 3DGS" };
+  const ordered = DATA.similarity.slice().sort((a, b) =>
+    (RANK[a.regime] ?? 9) - (RANK[b.regime] ?? 9) || b.rho - a.rho);
+  ordered.forEach(sm => {
+    const cv = el("canvas", { width: sm.n, height: sm.n, role: "img", "aria-label": `Similarity matrix, ${TITLE[sm.name] || sm.name}, ${sm.regime}, rho ${sm.rho}` });
     const ctx = cv.getContext("2d");
     const img = ctx.createImageData(sm.n, sm.n);
     for (let i = 0; i < sm.n; i++) for (let j = 0; j < sm.n; j++) {
@@ -890,12 +761,12 @@ function buildSimilarity() {
     }
     ctx.putImageData(img, 0, 0);
     g.append(el("figure", { class: "sim", style: "margin:0" }, cv,
-      el("h4", { text: `${sm.name} · ${sm.regime}` }),
+      el("h4", { text: `${TITLE[sm.name] || sm.name} · ${sm.regime}` }),
       el("div", { class: "meta", text: `ρ = ${sm.rho.toFixed(3)} · cost ${sm.lo}–${sm.hi}` })));
   });
   const ramp = el("div", { class: "sim", style: "grid-column: 1 / -1; padding: 10px 14px" },
     el("div", { class: "ramp", style: `background: linear-gradient(90deg, ${DATA.viridis.filter((_, i) => i % 32 === 0).concat(DATA.viridis[255]).join(",")})` }),
-    el("div", { class: "rampl" }, el("span", { text: "least similar pair of the sequence" }), el("span", { text: "frame i → frame j (origin lower left)" }), el("span", { text: "most similar" })));
+    el("div", { class: "rampl" }, el("span", { text: "least similar" }), el("span", { text: "frame i → frame j, origin lower left" }), el("span", { text: "most similar" })));
   g.append(ramp);
 }
 
