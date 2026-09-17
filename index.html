@@ -308,7 +308,7 @@ footer span { display: block; }
     <div><h4>Identical-source PSNR</h4><p>Against a render of the uncompressed input frame from every calibrated
       camera, pooled over all pixels, views and 300 frames. It isolates coding loss, so curves of different
       estimators do not share a scale.</p></div>
-    <div><h4>Per-frame mean</h4><p>D-FCGS and D-GPCC report PSNR averaged over frames, which is lower than the
+    <div><h4>Per-frame mean</h4><p>D-FCGS and D-GPCC report PSNR averaged over frames, which is never lower than the
       pooled value. Pick the per-frame mean metric to put them on one axis with the static codecs.</p></div>
     <div><h4>Ground truth</h4><p>PSNR, SSIM and LPIPS against the held-out camera. Every estimator shares one
       reference here, so published results can sit beside ours — but both arms saturate at the estimator's
