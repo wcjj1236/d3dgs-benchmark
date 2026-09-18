@@ -314,7 +314,10 @@ footer span { display: block; }
       reference here, so published results can sit beside ours — but both arms saturate at the estimator's
       ceiling.</p></div>
     <div><h4>Rate and BD-rate</h4><p>MB per frame is total bytes ÷ frames ÷ 10<sup>6</sup>, including every
-      I-frame. BD-rate integrates cubic fits of log rate over the quality range two curves share.</p></div>
+      I-frame. G-PCC and HGSC code the frame index of a concatenated group into their
+      bitstreams; L-GSC, LGSCV and GSCodec-S recover it from encoder-side ordering, which is
+      not counted. BD-rate integrates cubic fits of log rate over the quality range two
+      curves share.</p></div>
     <div><h4>Six-scene average</h4><p>The i-th rate point of each scene is averaged across the six scenes, and
       BD-rate is taken on the averaged curves.</p></div>
     <div><h4>Provenance</h4><p>Every point is a row of <span class="mono">results/tables</span> in the repository
