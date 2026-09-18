@@ -205,6 +205,39 @@ footer span { display: block; }
   .abstract { text-align: left; font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- coverage ---------- */
+.covkey { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: center; margin: 22px auto 14px; max-width: 900px; font-size: 13.5px; color: var(--muted); }
+.covkey span { display: inline-flex; align-items: center; gap: 7px; }
+.covkey i { display: inline-block; width: 28px; height: 16px; border-radius: 3px; border: 1px solid var(--rule); position: relative; font-style: normal; font-size: 10.5px; line-height: 15px; text-align: center; color: var(--muted); }
+.covkey i.k-one { color: var(--bad); }
+.covkey i.k-bd { background: color-mix(in srgb, var(--good) 40%, var(--surface)); border-color: transparent; }
+.covkey i.k-pos { background: color-mix(in srgb, var(--bad) 40%, var(--surface)); border-color: transparent; }
+.covkey i.k-miss { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--rule) 5px 6px); }
+.covkey i.k-g::after { content: ""; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.covwrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; }
+table.cov { border-collapse: separate; border-spacing: 0; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 100%; }
+table.cov th, table.cov td { padding: 0; border-bottom: 1px solid var(--grid); text-align: center; white-space: nowrap; }
+table.cov thead th { font-weight: 600; color: var(--muted); background: var(--surface); padding: 8px 4px; }
+table.cov thead tr:first-child th { color: var(--ink); border-bottom: 1px solid var(--rule); padding-top: 11px; }
+table.cov thead tr:first-child th small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+table.cov .rh { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; padding: 6px 14px 6px 12px; border-right: 1px solid var(--rule); color: var(--ink); }
+table.cov .rh i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; }
+table.cov .gs { border-left: 1px solid var(--rule); }
+table.cov tr.sec td { text-align: left; padding: 14px 12px 7px; background: var(--sunk); color: var(--ink); font-weight: 600; border-bottom: 1px solid var(--rule); }
+table.cov tr.sec td .sn { font-weight: 400; color: var(--muted); margin-left: 10px; }
+table.cov tr.sec td .sc { font-weight: 400; color: var(--muted); margin-left: 18px; }
+table.cov tr.sec td.stick { position: sticky; left: 0; z-index: 1; }
+table.cov td.c { display: table-cell; min-width: 58px; height: 30px; position: relative; }
+table.cov td.c button { all: unset; box-sizing: border-box; display: block; width: 100%; padding: 7px 5px; cursor: pointer; }
+table.cov td.c button:hover { box-shadow: inset 0 0 0 1px var(--ink-2); }
+table.cov td.c button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+table.cov td.c.cv-miss { background: repeating-linear-gradient(135deg, transparent 0 5px, var(--grid) 5px 6px); color: var(--muted); }
+table.cov td.c.cv-na { color: var(--rule); font-size: 12px; }
+table.cov td.c.cv-one button { color: var(--bad); font-size: 12px; }
+table.cov td.c.cv-single button { color: var(--ink-2); }
+table.cov td.c.cv-g::after { content: ""; position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); pointer-events: none; }
+@media (max-width: 620px) { table.cov .rh { padding: 6px 8px; font-size: 12px; } table.cov .rh i { margin-right: 5px; } table.cov td.c { min-width: 52px; } }
 </style>
 </head>
 <body>
@@ -288,6 +321,12 @@ footer span { display: block; }
   <div class="tablewrap"><table class="res" id="restable"></table></div>
 </section>
 
+<section id="coverage" aria-labelledby="coverage-title">
+  <h2 id="coverage-title">What has been measured</h2>
+  <p class="note">One cell per experiment, input estimator and scene. A number is the BD-rate of the experiment against its anchor on input-referenced PSNR; a hatched cell has not been run. Select a cell to open its curves above.</p>
+  <div class="covkey" id="covkey"></div>
+  <div class="covwrap"><table class="cov" id="cov"></table></div>
+</section>
 <section id="methods" aria-labelledby="methods-title">
   <h2 id="methods-title">Estimators and codecs</h2>
   <p class="note">Every upstream project is fetched at the commit on its card and patched by its
@@ -573,9 +612,33 @@ function renderPicker() {
 }
 
 /* ---------- plot ---------- */
+// Input-referenced quality is measured against each estimator's own frames, so each
+// estimator gets its own axes; against ground truth every curve shares one reference.
+const PANELS = [
+  ["3dgstream", "3DGStream · tracked"],
+  ["4dgaussians", "4D Gaussians · tracked"],
+  ["queen", "QUEEN · semi-tracked"],
+  ["3dgs-perframe", "Per-frame 3DGS · untracked"],
+];
+let lastNarrow = null;
+// Plotly labels minor log ticks with bare mantissas ("2 5 1 2 5"); spell every tick out.
+function logTicks(xs) {
+  const v = xs.filter(x => x > 0);
+  if (!v.length) return {};
+  const lo = Math.min(...v), hi = Math.max(...v);
+  const within = mants => {
+    const vals = [];
+    for (let e = Math.floor(Math.log10(lo)) - 1; e <= Math.ceil(Math.log10(hi)) + 1; e++)
+      for (const m of mants) { const t = m * 10 ** e; if (t >= lo / 1.06 && t <= hi * 1.06) vals.push(+t.toPrecision(3)); }
+    return vals;
+  };
+  let vals = within([1, 2, 5]);
+  if (vals.length < 3) vals = within([1, 1.5, 2, 3, 5, 7]);
+  return vals.length >= 2 ? { tickmode: "array", tickvals: vals, ticktext: vals.map(String) } : {};
+}
 function renderPlot() {
   const m = metricMeta(), th = theme();
-  const traces = [];
+  const traces = [], gens = [];
   const missing = [];
   [...state.sel].forEach(id => {
     const s = S.get(id);
@@ -593,33 +656,71 @@ function renderPlot() {
       marker: { color: s.color, size: s.symbol === "star" ? 15 : single ? 9 : 7, symbol: s.symbol, line: { width: s.symbol === "star" ? 1 : 0, color: th.surface } },
       hovertemplate: `<b>${s.name}</b> · ${s.sub}<br>%{customdata[0]}<br>%{x:.3f} MB/frame · %{y:.${m.d}f}${m.unit ? " " + m.unit : ""}<extra></extra>`,
     });
+    gens.push(s.gen || null);
   });
+  const panels = state.proto === "input" ? (state.gen === "all" ? PANELS : PANELS.filter(p => p[0] === state.gen)) : null;
   const notice = [];
   if (missing.length) notice.push(`Not available for ${m.label} on ${SCENE_NAME[state.scene]}: ${missing.join("; ")}.`);
   if (state.proto === "input" && state.metric !== "psnr_fa" && state.metric !== "ssim" && [...state.sel].some(id => /^(dyn|dyn4dg|gof\|dfcgs)/.test(id) && !/gscodec-d/.test(id)))
     notice.push("D-FCGS and D-GPCC report per-frame mean PSNR and SSIM only.");
-  if (state.proto === "input" && new Set([...state.sel].map(id => S.get(id)?.gen).filter(Boolean)).size > 1)
-    notice.push("Input-referenced quality is measured against each estimator's own frames, so curves of different estimators sit on different scales.");
+  const shown = panels ? traces.filter((_, i) => panels.some(p => p[0] === gens[i])) : traces;
+  const shownGens = panels ? gens.filter(g => panels.some(p => p[0] === g)) : gens;
+  if (panels && shown.length < traces.length)
+    notice.push(`${traces.length - shown.length} selected series of other estimators are hidden; choose All to see every estimator.`);
   $("#notice").textContent = notice.join(" ");
   const plot = $("#plot");
-  if (!traces.length) {
+  if (!shown.length) {
     Plotly.purge(plot);
+    plot.style.height = "";
     plot.replaceChildren(el("div", { class: "empty", text: state.sel.size ? "None of the selected series has this metric for this scene. Try another scene, metric or reference." : "Nothing selected. Pick series from the list or start from a paper view." }));
     return;
   }
   if (plot.firstChild && plot.firstChild.classList && plot.firstChild.classList.contains("empty")) plot.replaceChildren();
   const narrow = plot.clientWidth < 620;
+  lastNarrow = narrow;
+  const axis = { gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.sans, size: 12 } };
+  const yText = `${state.proto === "gt" ? "vs ground truth · " : "vs input · "}${m.label}${m.unit ? " (" + m.unit + ")" : ""}`;
+  const xText = "Rate (MB per frame, log scale)";
   const layout = {
     paper_bgcolor: th.surface, plot_bgcolor: th.surface,
     font: { family: th.sans, color: th.ink2, size: 12.5 },
-    margin: { l: 62, r: 16, t: 18, b: narrow ? 150 : 110 },
-    xaxis: { type: "log", title: { text: "Rate (MB per frame, log scale)", standoff: 8 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.sans, size: 12 } },
-    yaxis: { title: { text: `${state.proto === "gt" ? "vs ground truth · " : "vs input · "}${m.label}${m.unit ? " (" + m.unit + ")" : ""}`, standoff: 6 }, gridcolor: th.grid, linecolor: th.rule, zeroline: false, ticks: "outside", tickcolor: th.rule, tickfont: { family: th.sans, size: 12 } },
-    legend: { orientation: "h", x: 0, y: -0.16, yanchor: "top", font: { size: 12, color: th.ink2 }, bgcolor: "rgba(0,0,0,0)" },
     hoverlabel: { bgcolor: th.surface, bordercolor: th.rule, font: { family: th.sans, color: th.ink, size: 12.5 } },
     hovermode: "closest",
   };
-  Plotly.react(plot, traces, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"], toImageButtonOptions: { format: "svg", filename: "rd-plot" } });
+  if (!panels || panels.length === 1) {
+    plot.style.height = "";
+    Object.assign(layout, {
+      height: undefined,
+      margin: { l: 62, r: 16, t: panels ? 34 : 18, b: narrow ? 150 : 110 },
+      xaxis: { type: "log", title: { text: xText, standoff: 8 }, ...axis, ...logTicks(shown.flatMap(t => t.x)) },
+      yaxis: { title: { text: yText, standoff: 6 }, ...axis },
+      legend: { orientation: "h", x: 0, y: -0.16, yanchor: "top", font: { size: 12, color: th.ink2 }, bgcolor: "rgba(0,0,0,0)" },
+      annotations: panels ? [{ text: `<b>${panels[0][1]}</b>`, xref: "paper", yref: "paper", x: 0, y: 1.02, xanchor: "left", yanchor: "bottom", showarrow: false, font: { size: 13.5, color: th.ink } }] : [],
+    });
+  } else {
+    const cols = narrow ? 1 : 2, rows = Math.ceil(panels.length / cols);
+    const panelH = narrow ? 300 : 320, legendH = Math.min(180, 26 * Math.ceil(shown.length / (narrow ? 1 : 3)) + 30);
+    const height = rows * panelH + 60 + legendH;
+    plot.style.height = `${height}px`;
+    Object.assign(layout, {
+      height,
+      grid: { rows, columns: cols, pattern: "independent", roworder: "top to bottom", xgap: 0.1, ygap: narrow ? 0.3 : 0.2 },
+      margin: { l: 62, r: 16, t: 34, b: legendH + 44 },
+      legend: { orientation: "h", x: 0, y: -44 / (rows * panelH), yanchor: "top", font: { size: 12, color: th.ink2 }, bgcolor: "rgba(0,0,0,0)" },
+      annotations: [],
+    });
+    panels.forEach(([gen, title], k) => {
+      const ax = k === 0 ? "" : String(k + 1);
+      const row = Math.floor(k / cols), col = k % cols;
+      const mine = shown.filter((_, i) => shownGens[i] === gen);
+      layout[`xaxis${ax}`] = { type: "log", ...axis, ...logTicks(mine.flatMap(t => t.x)), title: row === rows - 1 ? { text: xText, standoff: 6, font: { size: 12 } } : undefined };
+      layout[`yaxis${ax}`] = { ...axis, title: col === 0 ? { text: yText, standoff: 4, font: { size: 12 } } : undefined };
+      layout.annotations.push({ text: `<b>${title}</b>`, xref: `x${ax} domain`, yref: `y${ax} domain`, x: 0, y: 1.03, xanchor: "left", yanchor: "bottom", showarrow: false, font: { size: 13.5, color: th.ink } });
+      mine.forEach(t => { t.xaxis = `x${ax}`; t.yaxis = `y${ax}`; });
+      if (!mine.length) layout.annotations.push({ text: "no selected series", xref: `x${ax} domain`, yref: `y${ax} domain`, x: 0.5, y: 0.5, showarrow: false, font: { size: 12.5, color: th.muted } });
+    });
+  }
+  Plotly.react(plot, shown, layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"], toImageButtonOptions: { format: "svg", filename: "rd-plot" } });
 }
 
 /* ---------- table ---------- */
@@ -773,13 +874,122 @@ function buildSimilarity() {
   g.append(ramp);
 }
 
+/* ---------- coverage ---------- */
+// null = not applicable (the method needs tracked input); {test: null} = applicable, not run.
+const COV_GENS = [["3dgstream", "3DGStream", "tracked"], ["4dgaussians", "4D Gaussians", "tracked"], ["queen", "QUEEN", "semi-tracked"], ["3dgs-perframe", "Per-frame 3DGS", "untracked"]];
+const COV_SCENES = [...DATA.scenes, "average"];
+const SHORT = { coffee_martini: "CM", cook_spinach: "CS", cut_roasted_beef: "CRB", flame_salmon: "FSa", flame_steak: "FSt", sear_steak: "SS", average: "Avg" };
+const ST_OF = { "3dgstream": "tracked", queen: "semi-tracked", "3dgs-perframe": "untracked" };
+const isTracked = g => g === "3dgstream" || g === "4dgaussians";
+function coverageRows() {
+  const rows = [];
+  const sec = (title, note) => rows.push({ section: title, note });
+  sec("Static GS codecs", "GoF-30 concatenation against per-frame coding");
+  STATIC.forEach(c => rows.push({ label: NAME[c], color: COLOR[c], metric: "psnr_rgb",
+    cell: g => ST_OF[g] ? { test: `gs|${ST_OF[g]}|${c}|concat`, anchor: `gs|${ST_OF[g]}|${c}|perframe` } : { test: null, anchor: null } }));
+  sec("Estimator sweep", "G-PCC, GoF-150 concatenation against per-frame coding");
+  rows.push({ label: "G-PCC · GoF 150", color: COLOR.gpcc, metric: "psnr_rgb", cell: g => ({ test: `sweep|${g}|concat`, anchor: `sweep|${g}|perframe` }) });
+  sec("Dynamic GS codecs", "tracked input only; D-GPCC against its I-frames coded one by one, per-frame mean PSNR");
+  const dyn = (label, codec, metric, ids) => rows.push({ label, color: COLOR[codec], metric,
+    cell: g => !isTracked(g) ? null : (ids[g] || (ids.anchor ? { test: null, anchor: null } : { test: null })) });
+  dyn("D-GPCC · GoF 10", "d-gpcc", "psnr_fa", { anchor: true, "3dgstream": { test: "dyn|dgpcc|10", anchor: "dyn|dgpcc-pfi|10" }, "4dgaussians": { test: "dyn4dg|dgpcc|10", anchor: "dyn4dg|dgpcc-pfi|10" } });
+  dyn("D-GPCC · GoF 5", "d-gpcc", "psnr_fa", { anchor: true, "3dgstream": { test: "dyn|dgpcc|5", anchor: "dyn|dgpcc-pfi|5" } });
+  dyn("D-FCGS · GoF 10", "d-fcgs", "psnr_fa", { "3dgstream": { test: "dyn|dfcgs|10" }, "4dgaussians": { test: "dyn4dg|dfcgs|10" } });
+  dyn("D-FCGS · GoF 5", "d-fcgs", "psnr_fa", { "3dgstream": { test: "dyn|dfcgs|5" } });
+  dyn("GSCodec-D · GoP 16", "gscodec-d", "psnr_rgb", { "3dgstream": { test: "dyn|gscodec-d|16" } });
+  dyn("GSCodec-D · GoP 30", "gscodec-d", "psnr_rgb", { "3dgstream": { test: "dyn|gscodec-d|30" } });
+  sec("Group-length ablations", "against GoF 1 (GoP 1) of the same codec");
+  [5, 10, 30, 75, 150].forEach(L => rows.push({ label: `G-PCC · GoF ${L}`, color: COLOR.gpcc, metric: "psnr_rgb",
+    cell: g => ({ test: `gof|gpcc|${g}|${L}`, anchor: `gof|gpcc|${g}|1` }) }));
+  [16, 30, 50, 100].forEach(L => rows.push({ label: `GSCodec-D · GoP ${L}`, color: COLOR["gscodec-d"], metric: "psnr_rgb",
+    cell: g => !isTracked(g) ? null : g === "3dgstream" ? { test: `gop|gscodec-d|${L}`, anchor: "gop|gscodec-d|1" } : { test: null, anchor: null } }));
+  [5, 10, 15, 30, 50, 100].forEach(L => rows.push({ label: `D-FCGS · GoF ${L}`, color: COLOR["d-fcgs"], metric: "psnr_fa",
+    cell: g => !isTracked(g) ? null : g === "3dgstream" ? { test: `gof|dfcgs|${L}` } : { test: null } }));
+  return rows;
+}
+function coverageCell(spec, scene, metric) {
+  if (spec === null) return { kind: "na" };
+  const t = spec.test ? S.get(spec.test) : null, a = spec.anchor ? S.get(spec.anchor) : null;
+  const tp = t ? points(t, scene, metric) : [], ap = a ? points(a, scene, metric) : [];
+  const gt = [t, a].some(x => x && x.d[scene] && (x.d[scene].psnr_gt || []).some(v => v != null));
+  const ids = [spec.test, spec.anchor].filter(id => id && S.has(id));
+  if ("anchor" in spec) {
+    if (tp.length && ap.length) {
+      const v = bdRate(ap, tp, false);
+      return v == null ? { kind: "single", text: "no overlap", gt, ids, title: "both arms measured, PSNR ranges do not overlap" } : { kind: "bd", v, gt, ids };
+    }
+    if (tp.length) return { kind: "one", text: "test only", gt, ids, title: "the anchor arm is missing" };
+    if (ap.length) return { kind: "one", text: "anchor only", gt, ids, title: "the tested arm is missing" };
+    return { kind: "miss" };
+  }
+  return tp.length ? { kind: "single", text: `✓ ${tp.length} pts`, gt, ids, title: "measured; no anchor to integrate against" } : { kind: "miss" };
+}
+function buildCoverage() {
+  $("#covkey").append(
+    el("span", {}, el("i", { class: "k-bd" }), "BD-rate, fewer bits"),
+    el("span", {}, el("i", { class: "k-pos" }), "BD-rate, more bits"),
+    el("span", {}, el("i", { text: "✓" }), "measured, no anchor"),
+    el("span", {}, el("i", { class: "k-one", text: "½" }), "one arm only"),
+    el("span", {}, el("i", { class: "k-miss" }), "not run"),
+    el("span", {}, el("i", { text: "n/a" }), "needs tracked input"),
+    el("span", {}, el("i", { class: "k-g" }), "ground-truth metrics too"));
+  const t = $("#cov");
+  const h1 = el("tr", {}, el("th", { class: "rh", rowspan: 2, scope: "col", text: "Experiment" }),
+    ...COV_GENS.map(([g, name, regime]) => el("th", { colspan: COV_SCENES.length, class: "gs", scope: "colgroup" }, name, el("small", { text: regime }))));
+  const h2 = el("tr", {}, ...COV_GENS.flatMap(() => COV_SCENES.map((sc, i) => el("th", { class: i === 0 ? "gs" : null, scope: "col", title: SCENE_NAME[sc], text: SHORT[sc] }))));
+  const tb = el("tbody");
+  const rows = coverageRows();
+  let secRow = null, tally = null;
+  const closeSection = () => { if (secRow) secRow.sc.textContent = `${tally.done} of ${tally.all} measured${tally.part ? ` · ${tally.part} partial` : ""}`; };
+  rows.forEach(r => {
+    if (r.section) {
+      closeSection();
+      const sc = el("span", { class: "sc" });
+      tb.append(el("tr", { class: "sec" }, el("td", { class: "stick", colspan: 1 + COV_GENS.length * COV_SCENES.length }, r.section, el("span", { class: "sn", text: r.note }), sc)));
+      secRow = { sc }; tally = { done: 0, part: 0, all: 0 };
+      return;
+    }
+    const tr = el("tr", {}, el("th", { class: "rh", scope: "row" }, el("i", { style: `background:${r.color}` }), r.label));
+    COV_GENS.forEach(([g, gname]) => {
+      const spec = r.cell(g);
+      COV_SCENES.forEach((sc, i) => {
+        const c = coverageCell(spec, sc, r.metric);
+        const cls = ["c", `cv-${c.kind}`, i === 0 ? "gs" : null, c.gt ? "cv-g" : null].filter(Boolean).join(" ");
+        if (c.kind !== "na") { tally.all++; if (c.kind === "bd" || c.kind === "single") tally.done++; if (c.kind === "one") tally.part++; }
+        if (c.kind === "na") { tr.append(el("td", { class: cls, title: `${r.label}: needs tracked input`, text: "n/a" })); return; }
+        if (c.kind === "miss") { tr.append(el("td", { class: cls, title: `${r.label} · ${gname} · ${SCENE_NAME[sc]}: not run`, "aria-label": "not run" })); return; }
+        const text = c.kind === "bd" ? `${c.v > 0 ? "+" : "−"}${Math.abs(c.v).toFixed(1)}%` : c.text;
+        const b = el("button", { type: "button", title: `${r.label} · ${gname} · ${SCENE_NAME[sc]}${c.title ? " — " + c.title : ""}${c.gt ? " · ground truth available" : ""}`,
+          onclick: () => {
+            Object.assign(state, { proto: "input", metric: r.metric, scene: sc, gen: "all", preset: null, ref: "" });
+            state.sel = new Set(c.ids);
+            update();
+            $("#explorer").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+          } }, text);
+        if (c.kind === "bd") {
+          const mag = Math.min(1, Math.abs(c.v) / 75);
+          b.style.background = c.v < 0 ? `color-mix(in srgb, var(--good) ${Math.round(8 + mag * 40)}%, var(--surface))` : `color-mix(in srgb, var(--bad) ${Math.round(12 + mag * 55)}%, var(--surface))`;
+          if (mag > 0.62 && c.v < 0) b.style.color = "var(--surface)";
+        }
+        tr.append(el("td", { class: cls }, b));
+      });
+    });
+    tb.append(tr);
+  });
+  closeSection();
+  t.replaceChildren(el("thead", {}, h1, h2), tb);
+}
+
 /* ---------- boot ---------- */
 buildControls();
 buildPicker();
 buildCatalogue();
 buildSimilarity();
+buildCoverage();
 update();
 const rerender = () => renderPlot();
+let resizeTimer;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (($("#plot").clientWidth < 620) !== lastNarrow) renderPlot(); }, 150); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
 new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 })();
